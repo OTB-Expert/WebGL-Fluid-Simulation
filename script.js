@@ -85,6 +85,7 @@ if (!ext.supportLinearFiltering) {
 }
 
 startGUI();
+startListening("otb.expert.editor");
 
 function getWebGLContext (canvas) {
     const params = { alpha: true, depth: false, stencil: false, antialias: false, preserveDrawingBuffer: false };
@@ -177,7 +178,27 @@ function supportRenderTextureFormat (gl, internalFormat, format, type) {
 }
 
 function startGUI () {
-    var gui = new dat.GUI({ width: 300 });
+    var gui = new dat.GUI({ width: 300 });    
+
+    gui.add({ fun: () => {
+        splatStack.push(parseInt(Math.random() * 20) + 5);
+    } }, 'fun').name('Random splats');
+
+    let editor = gui.add({ fun : () => {
+        ga('send', 'event', 'link button', 'editor');
+    } }, 'fun').name('Code Editor');
+    editor.__li.className = 'cr function bigFont';
+    editor.__li.style.height = '200px';
+    let editorIcon = document.createElement('span');
+    editor.domElement.parentElement.appendChild(editorIcon);
+    let editorTextarea = document.createElement('textarea');
+    editorTextarea.style.height = "200px";
+    editorTextarea.id = "otb.expert.editor";
+
+    
+    editor.domElement.parentElement.appendChild(document.createElement('hr'));
+    editor.domElement.parentElement.appendChild(editorTextarea);
+
     gui.add(config, 'DYE_RESOLUTION', { 'high': 1024, 'medium': 512, 'low': 256, 'very low': 128 }).name('quality').onFinishChange(initFramebuffers);
     gui.add(config, 'SIM_RESOLUTION', { '32': 32, '64': 64, '128': 128, '256': 256 }).name('sim resolution').onFinishChange(initFramebuffers);
     gui.add(config, 'DENSITY_DISSIPATION', 0, 4.0).name('density diffusion');
@@ -188,10 +209,6 @@ function startGUI () {
     gui.add(config, 'SHADING').name('shading').onFinishChange(updateKeywords);
     gui.add(config, 'COLORFUL').name('colorful');
     gui.add(config, 'PAUSED').name('paused').listen();
-
-    gui.add({ fun: () => {
-        splatStack.push(parseInt(Math.random() * 20) + 5);
-    } }, 'fun').name('Random splats');
 
     let bloomFolder = gui.addFolder('Bloom');
     bloomFolder.add(config, 'BLOOM').name('enabled').onFinishChange(updateKeywords);
@@ -1096,7 +1113,7 @@ function createTextureAsync (url) {
         obj.width = image.width;
         obj.height = image.height;
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+        // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
     };
     image.src = url;
 
@@ -1477,8 +1494,10 @@ window.addEventListener('touchend', e => {
 window.addEventListener('keydown', e => {
     if (e.code === 'KeyP')
         config.PAUSED = !config.PAUSED;
-    if (e.key === ' ')
-        splatStack.push(parseInt(Math.random() * 20) + 5);
+    if (e.key === ' '){
+        // We need to let users type.
+        // splatStack.push(parseInt(Math.random() * 20) + 5);
+    }
 });
 
 function updatePointerDownData (pointer, id, posX, posY) {
